@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sign Up</title>
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<!-- Image and text -->
+<nav class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    <img src="./img/expense.png" width="30" height="30" class="d-inline-block align-top" alt="" loading="lazy">
+    Expense Recorder
+  </a>
+</nav>
+
+<div class="container pt-3">
+	<h1>Signup Form</h1>
+	<form id="signupForm">
+		<div class="form-group">
+			<input type="text" id="full_name" name="" class="form-control" placeholder="Full Name">
+		</div>
+
+		<div class="form-group">
+			<input type="text" id="username" name="" class="form-control" placeholder="Username" id="username" onkeyup="checkuname(this.value)">
+		</div>
+
+		<div class="form-group">
+			<input type="text" id="password" name="" class="form-control" placeholder="Password">
+		</div>
+
+		<div class="form-group">
+			<button id="submitButton" type="submit" class="btn btn-primary btn-block">SUBMIT</button>
+		</div>
+	</form>
+</div>
+
+
+
+<script type="text/javascript" src="./js/jq.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script type="text/javascript">
+		
+	$("#signupForm").on("submit", function(e){
+
+		e.preventDefault();
+
+		var dataToPost = {
+			full_name:$("#full_name").val(),
+			username:$("#username").val(),
+			password:$("#password").val()
+		};
+
+		$.ajax({
+			url:"http://localhost/expense_recorder/api/controller/user_controller.php?operation=insert",
+			type:"POST",
+			data:dataToPost,
+			success:function(res){
+				if(res=="user_added"){
+					swal("SUCCESS", "User Added Successfully", "success").then(function(p){
+						location.href="login.html";
+					});
+				}
+			}
+		});
+
+		console.log(dataToPost);
+
+	});
+
+	function checkuname(puname){
+
+		$.ajax({
+			url:"http://localhost/expense_recorder/api/controller/user_controller.php?operation=check_username&puname="+puname,
+			type:"GET",
+			success:function(res){
+				if(res=="username_available"){
+					$("#username").addClass("bg-success");
+					$("#username").removeClass("bg-danger");
+					$("#submitButton").removeAttr('disabled');
+					
+					console.log("Available");
+				}
+				else{
+					$("#username").addClass("bg-danger");
+					$("#username").removeClass("bg-success");
+					$("#submitButton").attr('disabled', 'disabled');
+					console.log("Not Available");
+				}
+			}
+		});
+
+	}
+
+</script>
+
+<script type="text/javascript" src="./s/jq_slim.js"></script>
+<script type="text/javascript" src="./js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

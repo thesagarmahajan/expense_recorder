@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sign Up</title>
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<!-- Image and text -->
+<nav class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    <img src="./img/expense.png" width="30" height="30" class="d-inline-block align-top" alt="" loading="lazy">
+    Expense Recorder
+  </a>
+</nav>
+
+<div class="container pt-3">
+	<h1>Login Form</h1>
+	<form id="loginForm">
+
+		<div class="form-group">
+			<input type="text" id="username" name="" class="form-control" placeholder="Username" id="username">
+		</div>
+
+		<div class="form-group">
+			<input type="password" id="password" name="" class="form-control" placeholder="Password">
+		</div>
+
+		<div class="form-group">
+			<button id="submitButton" type="submit" class="btn btn-primary btn-block">LOGIN</button>
+		</div>
+	</form>
+</div>
+
+
+
+<script type="text/javascript" src="./js/jq.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script type="text/javascript">
+		
+	$("#loginForm").on("submit", function(e){
+
+		e.preventDefault();
+
+		
+		var username = $("#username").val();
+		var password = $("#password").val().split("").reverse().join("");
+		
+		var finalString = btoa(username+":"+password);
+		console.log(finalString);
+
+		$.ajax({
+			url:"http://localhost/expense_recorder/api/controller/user_controller.php?operation=login",
+			type:"GET",
+			headers:{
+				"Authorization":"creds "+finalString
+			},
+			success:function(res){
+				if (res=="") {
+					alert("Invalid Credentials");
+				}
+				else{
+					localStorage.setItem("userdata", JSON.stringify(res));
+					localStorage.setItem("token", finalString);
+					console.log(res);
+					location.href="myexpenses.html";
+				}
+			}
+		});
+
+	});
+
+</script>
+
+<script type="text/javascript" src="./js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

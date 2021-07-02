@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sign Up</title>
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<!-- Image and text -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    <img src="./img/expense.png" width="30" height="30" class="d-inline-block align-top" alt="" loading="lazy">
+    Expense Recorder
+  </a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="#" onclick="logout()">Logout <span class="sr-only">(current)</span></a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container pt-3">
+	<h1>My Expenses</h1>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Payee</th>
+        <th>Amount</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="expenses_table">
+      
+    </tbody>
+  </table>
+	
+</div>
+
+<div class="container">
+  <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+</div>
+
+<footer class=" d-flex justify-content-end fixed-bottom p-4">
+  <button class="btn btn-lg btn-primary" data-toggle="modal" data-target="#add_exp_modal">+</button>
+</footer>
+
+<div class="modal fade" id="add_exp_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add New Expense</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <form class="" id="add_exp_form" onsubmit="add_expense(event)">
+            <div class="form-group">
+              <select id="exp_types" name="exp_type_id" class="form-control">
+                <option>Select Category</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <input type="text" name="payee" placeholder="Payee" class="form-control">
+            </div>
+            <div class="form-group">
+              <input type="text" name="amount" placeholder="Amount" class="form-control">
+            </div>
+            <div class="form-group">
+              <button class="btn btn-primary btn-block">Add Expense</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="modal-footer">
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="update_exp_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Update Expense</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <form class="" id="update_exp_form" onsubmit="update_expense(event)">
+            <div class="form-group">
+              <input type="text" name="payee" id="payeeToUpdate" placeholder="Payee" class="form-control">
+            </div>
+            <div class="form-group">
+              <input type="text" name="amount" id="amountToUpdate" placeholder="Amount" class="form-control">
+            </div>
+            <input type="hidden" name="exp_id" id="expIdToUpdate">
+            <div class="form-group">
+              <button class="btn btn-primary btn-block">Update Expense</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="modal-footer">
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script type="text/javascript" src="./js/jq.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script type="text/javascript">
+
+  var udata = JSON.parse(localStorage.getItem("userdata"));
+
+  window.onload = function() {
+
+            $.ajax({
+               url:"http://localhost/expense_recorder/api/controller/exp_controller.php?operation=piechart_data&uid="+udata[0].id,
+              type:"GET",
+              headers:{
+                "Authorization":"creds "+localStorage.getItem("token")
+              },
+              success:function(res){
+                
+                var chart = new CanvasJS.Chart("chartContainer", {
+                    animationEnabled: true,
+                    title: {
+                      text: "Expenses"
+                    },
+                    data: [{
+                      type: "pie",
+                      startAngle: 240,
+                      yValueFormatString: "##0.00\"\"",
+                      indexLabel: "{label} {y}",
+                      dataPoints: JSON.parse(res)
+                    }]
+                  });
+                  chart.render();
+              }
+            });
+
+  }
+
+	if(localStorage.getItem("userdata")==null){
+		location.href="login.html"
+	}
+
+
+  
+
+  function add_expense(e) {
+    e.preventDefault();
+    
+    $.ajax({
+      url:"http://localhost/expense_recorder/api/controller/exp_controller.php?operation=add_expense&uid="+udata[0].id,
+      type:"POST",
+      data:$("#add_exp_form").serializeArray(),
+      headers:{
+        "Authorization":"creds "+localStorage.getItem("token")
+      },
+      success:function(res){
+        if(res=="exp added"){
+          getAllExpenses();
+        }
+        else{
+          alert("Somthing went wrong");
+        }
+      }
+    });
+  }
+
+  function update_expense(e){
+    e.preventDefault();
+    $.ajax({
+      url:"http://localhost/expense_recorder/api/controller/exp_controller.php?operation=update_exp",
+      type:"POST",
+      data:$("#update_exp_form").serializeArray(),
+      headers:{
+        "Authorization":"creds "+localStorage.getItem("token")
+      },
+      success:function(res){
+        if(res=="Updated Successfully"){
+          getAllExpenses();
+        }
+        else{
+          alert("Somthing went wrong");
+        }
+      }
+    });
+  }
+  
+  
+
+  $.ajax({
+    url:"http://localhost/expense_recorder/api/controller/exp_type_controller.php?operation=list_exp_type&uid="+udata[0].id,
+    type:"GET",
+    headers:{
+      "Authorization":"creds "+localStorage.getItem("token")
+    },
+    success:function(res){
+      var td = '';
+
+      $.each(res, function(key, val){
+        console.log(val);
+
+        td += "<option value='"+val.id+"'>"+val.title+"</option>";
+
+      });
+
+      $("#exp_types").html(td);
+
+    }
+  });
+
+	function logout(){
+		localStorage.removeItem("userdata");
+		location.href = "login.html";
+	}
+
+
+  function deleteExpense(expId) {
+
+    swal({
+        title: "Are you sure, you want to delete this expense?",
+        text: "Once deleted, you will not be able to recover this expense!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+      })
+      .then((willDelete) => {
+        if (willDelete) {
+           $.ajax({
+            url:"http://localhost/expense_recorder/api/controller/exp_controller.php?operation=delete_exp&exp_id="+expId,
+            type:"GET",
+            headers:{
+              "Authorization":"creds "+localStorage.getItem("token")
+            },
+            success:function(res){
+              swal("Your expense is deleted!");
+              getAllExpenses();
+            }
+          });
+        } else {
+          swal("Your expense is safe!");
+        }
+      });
+
+   
+  }
+ 
+  // console.log();
+  function getAllExpenses(){
+      $.ajax({
+        url:"http://localhost/expense_recorder/api/controller/exp_controller.php?operation=list_all_expenses&uid="+udata[0].id,
+        type:"GET",
+        headers:{
+            "Authorization":"creds "+localStorage.getItem("token")
+        },
+        success:function(res){
+          
+          var td = '';
+
+          $.each(res, function(key, val){
+            console.log(val);
+
+            td += "<tr>";
+              td += "<td>"+val.id+"</td>";
+              td += "<td>"+val.payee+"</td>";
+              td += "<td>"+val.amount+"</td>";
+              td += "<td>";
+              
+                td += "<button class='btn btn-info' data-toggle='modal' data-target='#update_exp_modal' onclick='bindDataToUpdate("+JSON.stringify(val)+")'>E</button>";
+                td += "<button class='btn btn-danger' onclick='deleteExpense("+val.id+")'>D</button>";
+              td += "</td>";
+            td += "</tr>";
+
+          });
+
+          $("#expenses_table").html(td);
+
+        }
+      });
+  }
+
+  function bindDataToUpdate(dataToUpdate){
+    $("#expIdToUpdate").val(dataToUpdate.id);
+    $("#amountToUpdate").val(dataToUpdate.amount);
+    $("#payeeToUpdate").val(dataToUpdate.payee);
+  }
+  
+
+getAllExpenses();
+
+</script>
+
+<script type="text/javascript" src="./js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+
+</body>
+</html>
